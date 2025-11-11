@@ -201,3 +201,18 @@ python -m bot.app
   - `docker compose up --build` — webhook будет активен автоматически.
 
 Вернуться к polling: `WEBHOOK_MODE=false` и обычный запуск `python -m bot.app`.
+
+## День 13 — CI/CD и /stats
+
+- GitHub Actions:
+  - Workflow: `.github/workflows/ci.yml` — ruff + pytest + docker build.
+  - Триггеры: push в `main/master`, Pull Request.
+  - Требования: `requirements.txt` в корне, при желании добавьте секреты для push образа.
+
+- Ruff/pytest:
+  - Конфиг: `pyproject.toml`.
+  - Локальный запуск: `ruff check .` и `pytest`.
+
+- /stats (для ADMIN_ID):
+  - Команда выводит: uptime, статус Redis и DB, текущий LOG_LEVEL.
+  - Пример: отправьте `/stats` в ЛС боту.
