@@ -3,9 +3,10 @@ from aiogram.filters import Command
 from bot.filters.admin import IsAdmin
 from bot.core.settings import settings
 from bot.infra.db import SessionLocal
-from sqlalchemy import text
+from sqlalchemy import text, select, func
 import redis.asyncio as aioredis
 from bot.services.runtime import uptime_seconds
+from bot.models.feedback import Feedback
 
 router = Router()
 
@@ -29,10 +30,13 @@ async def cmd_stats(message: types.Message) -> None:
 
     # DB ping
     db_ok = False
+    fb_count = None
     try:
         async with SessionLocal() as session:
             await session.execute(text("SELECT 1"))
             db_ok = True
+            res = await session.execute(select(func.count()).select_from(Feedback))
+            fb_count = res.scalar() or 0
     except Exception:
         db_ok = False
 
@@ -42,5 +46,7 @@ async def cmd_stats(message: types.Message) -> None:
         f"Redis: {'OK' if redis_ok else 'FAIL'}\n"
         f"DB: {'OK' if db_ok else 'FAIL'}\n"
         f"Log level: {settings.log_level}\n"
+        f"Mode: {'webhook' if settings.webhook_mode else 'polling'}\n"
+        f"Feedbacks: {fb_count if fb_count is not None else 'n/a'}\n"
     )
     await message.answer(text_msg)
