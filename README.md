@@ -114,7 +114,7 @@ docker run --name tgbot-postgres \
 
 1) Экспортируйте секреты окружения (или используйте .env в корне):
 ```bash
-export BOT_TOKEN=... 
+export BOT_TOKEN=...
 export ADMIN_ID=...
 export LOG_LEVEL=INFO
 export LOG_FILE=/var/log/bot.log
@@ -133,3 +133,4 @@ docker compose up --build
 Остановка:
 ```bash
 docker compose down
+```

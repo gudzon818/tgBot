@@ -20,22 +20,19 @@ from bot.infra.db import init_db, close_db
 
 
 async def main() -> None:
-    # Logging config: console + rotating file
+    # Configure logging: console + rotating file based on settings
     level = getattr(logging, settings.log_level.upper(), logging.INFO)
     logger = logging.getLogger()
     logger.setLevel(level)
     fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
-    # Console handler
     ch = logging.StreamHandler()
     ch.setFormatter(fmt)
     ch.setLevel(level)
     logger.addHandler(ch)
-    # File handler with rotation
     fh = RotatingFileHandler(settings.log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
     fh.setFormatter(fmt)
     fh.setLevel(level)
     logger.addHandler(fh)
-
     bot = Bot(token=settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=MemoryStorage())
     # Middlewares
@@ -48,7 +45,7 @@ async def main() -> None:
     dp.include_router(whoami_router)
     dp.include_router(health_router)
 
-    logging.info("Bot is starting long polling... (Day 5)")
+    logging.info("Bot is starting long polling... (Day 7)")
     # Auto init DB schema
     try:
         await init_db()
