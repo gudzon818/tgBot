@@ -71,3 +71,33 @@ python -m bot.app
 - Отправьте `/feedback` — бот попросит текст отзыва.
 - Отправьте сообщение с отзывом — бот ответит «Спасибо за отзыв! ✨» и завершит состояние.
 - Если передумали — `/cancel`.
+
+## День 6 — База данных (PostgreSQL) и отзывы
+
+- Настройки окружения:
+  - `DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/tgbot`
+  - `ADMIN_ID=<ваш_numeric_id>` (узнать: `/whoami`)
+
+- Быстрый старт Postgres (Docker):
+```bash
+docker run --name tgbot-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_DB=tgbot \
+  -p 5432:5432 -d postgres:16
+```
+
+- Инициализация схемы:
+  - Выполняется автоматически при старте бота (`init_db()`).
+
+- Проверка отзывов:
+  1) Запустите бота:
+  ```bash
+  python -m bot.app
+  ```
+  2) Отправьте `/feedback` и затем одно сообщение — бот ответит: «Спасибо за отзыв! ✨ (сохранено)»
+  3) Отправьте `/last_feedbacks` — увидите до 10 последних отзывов (доступно только `ADMIN_ID`).
+
+Подсказки:
+- Если бот не видит БД — проверьте, запущен ли контейнер и корректен ли `DATABASE_URL`.
+- После изменения `.env` перезапускайте бота.

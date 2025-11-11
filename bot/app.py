@@ -12,7 +12,9 @@ from bot.handlers.help import router as help_router
 from bot.handlers.ping import router as ping_router
 from bot.handlers.callbacks import router as callbacks_router
 from bot.handlers.feedback import router as feedback_router
+from bot.handlers.whoami import router as whoami_router
 from bot.middlewares.anti_flood import AntiFloodMiddleware
+from bot.infra.db import init_db
 
 
 async def main() -> None:
@@ -26,8 +28,15 @@ async def main() -> None:
     dp.include_router(ping_router)
     dp.include_router(callbacks_router)
     dp.include_router(feedback_router)
+    dp.include_router(whoami_router)
 
     logging.info("Bot is starting long polling... (Day 5)")
+    # Auto init DB schema
+    try:
+        await init_db()
+        logging.info("Database initialized (or already up-to-date)")
+    except Exception as e:
+        logging.exception("Failed to init DB: %s", e)
     await dp.start_polling(bot)
 
 
