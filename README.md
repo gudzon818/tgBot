@@ -134,3 +134,70 @@ docker compose up --build
 ```bash
 docker compose down
 ```
+
+## День 10 — Redis: FSM и rate‑limit
+
+- Настройки:
+  - `REDIS_URL=redis://localhost:6379/0` (в контейнерах: `redis://redis:6379/0`)
+- FSM‑хранилище:
+  - При наличии Redis используется `RedisStorage`; иначе фолбэк `MemoryStorage`.
+- Ограничение частоты (rate‑limit):
+  - Через Redis (middleware), при отсутствии Redis — `AntiFloodMiddleware`.
+
+### Как проверить
+- Локально (без контейнеров):
+  - Если Redis не установлен, всё работает с памятью. Для установки: `brew install redis && brew services start redis`.
+  - Запуск бота: `python -m bot.app` — в логах при успехе Redis будет `FSM storage: RedisStorage`.
+- В контейнерах: `docker compose up --build` — Redis поднимется автоматически.
+
+## День 11 — Роли и inline‑пагинация
+
+- Роли:
+  - Фильтр `IsAdmin` (основан на `ADMIN_ID` из `.env`).
+  - Команда `/admin` — доступ только админу.
+- Inline‑пагинация:
+  - Команда `/items` — демонстрационный список с кнопками Prev/Page/Next.
+
+### Как проверить
+- `/admin` — должно отвечать только вам (ADMIN_ID задан ранее).
+- `/items` — листайте кнопками, обновляется сообщение и клавиатура.
+
+## День 12 — Webhook (FastAPI)
+
+- Переключатель режима:
+  - `WEBHOOK_MODE=false` — polling (по умолчанию).
+  - `WEBHOOK_MODE=true` — webhook‑режим (FastAPI, Uvicorn).
+- Настройки вебхука:
+  - `WEBHOOK_URL` — публичный HTTPS URL (например, https://your-domain.com).
+  - `WEBHOOK_PATH` — путь для приёма обновлений (по умолчанию `/webhook`).
+  - `WEB_HOST` и `WEB_PORT` — адрес и порт локального HTTP‑сервера.
+
+### Локальная проверка (tunnel)
+
+1) Получите внешний HTTPS URL:
+   - ngrok: `ngrok http 8000` → возьмите `https://<subdomain>.ngrok.io`
+   - либо Cloudflare Tunnel: `cloudflared tunnel --url http://localhost:8000`
+2) В `.env` установите:
+```
+WEBHOOK_MODE=true
+WEBHOOK_URL=<ваш_https_url>
+WEBHOOK_PATH=/webhook
+WEB_PORT=8000
+```
+3) Запуск:
+```
+python -m bot.app
+```
+4) Проверка:
+   - GET http://localhost:8000/health → `{ "status": "ok" }`
+   - В логах: `Webhook mode startup`
+   - Telegram начнёт слать обновления на `<WEBHOOK_URL><WEBHOOK_PATH>`
+
+### Прод
+
+- Укажите реальный домен с HTTPS в `WEBHOOK_URL` и откройте порт `WEB_PORT` за reverse‑proxy (nginx/traefik/Caddy).
+- В Docker:
+  - Добавьте переменные `WEBHOOK_MODE=true`, `WEBHOOK_URL=...`, при необходимости пробросьте порт контейнера (например, `8000:8000`).
+  - `docker compose up --build` — webhook будет активен автоматически.
+
+Вернуться к polling: `WEBHOOK_MODE=false` и обычный запуск `python -m bot.app`.

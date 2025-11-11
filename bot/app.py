@@ -8,6 +8,9 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 import redis.asyncio as aioredis
+from fastapi import FastAPI, Request
+from aiogram.types import Update
+import uvicorn
 
 from bot.core.settings import settings
 from bot.handlers.start import router as start_router
@@ -23,6 +26,9 @@ from bot.handlers.items import router as items_router
 from bot.middlewares.anti_flood import AntiFloodMiddleware
 from bot.middlewares.rate_limit import RedisRateLimitMiddleware
 from bot.infra.db import init_db, close_db
+
+
+app: FastAPI | None = None
 
 
 async def main() -> None:
@@ -78,19 +84,64 @@ async def main() -> None:
         logging.info("Database initialized (or already up-to-date)")
     except Exception as e:
         logging.exception("Failed to init DB: %s", e)
-    try:
-        await dp.start_polling(bot)
-    finally:
-        await close_db()
-        try:
-            await bot.session.close()
-        except Exception:
-            pass
-        if redis_client is not None:
+    if settings.webhook_mode:
+        # Build FastAPI app for webhook mode
+        global app
+        app = FastAPI()
+
+        @app.on_event("startup")
+        async def on_startup():
+            # Set webhook if URL provided
+            if settings.webhook_url:
+                await bot.set_webhook(url=settings.webhook_url.rstrip("/") + settings.webhook_path)
+            logging.info("Webhook mode startup")
+
+        @app.on_event("shutdown")
+        async def on_shutdown():
             try:
-                await redis_client.close()
+                await bot.delete_webhook(drop_pending_updates=True)
             except Exception:
                 pass
+            await close_db()
+            try:
+                await bot.session.close()
+            except Exception:
+                pass
+            if redis_client is not None:
+                try:
+                    await redis_client.close()
+                except Exception:
+                    pass
+
+        @app.get("/health")
+        async def health():
+            return {"status": "ok"}
+
+        @app.post(settings.webhook_path)
+        async def webhook(request: Request):
+            data = await request.json()
+            update = Update.model_validate(data)
+            await dp.feed_update(bot, update)
+            return {"ok": True}
+
+        # Run uvicorn server
+        config = uvicorn.Config(app, host=settings.web_host, port=settings.web_port, log_level="info")
+        server = uvicorn.Server(config)
+        await server.serve()
+    else:
+        try:
+            await dp.start_polling(bot)
+        finally:
+            await close_db()
+            try:
+                await bot.session.close()
+            except Exception:
+                pass
+            if redis_client is not None:
+                try:
+                    await redis_client.close()
+                except Exception:
+                    pass
 
 
 if __name__ == "__main__":
