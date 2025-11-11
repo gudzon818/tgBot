@@ -18,6 +18,8 @@ from bot.handlers.feedback import router as feedback_router
 from bot.handlers.whoami import router as whoami_router
 from bot.handlers.health import router as health_router
 from bot.handlers.lang import router as lang_router
+from bot.handlers.admin import router as admin_router
+from bot.handlers.items import router as items_router
 from bot.middlewares.anti_flood import AntiFloodMiddleware
 from bot.middlewares.rate_limit import RedisRateLimitMiddleware
 from bot.infra.db import init_db, close_db
@@ -66,6 +68,8 @@ async def main() -> None:
     dp.include_router(whoami_router)
     dp.include_router(health_router)
     dp.include_router(lang_router)
+    dp.include_router(admin_router)
+    dp.include_router(items_router)
 
     logging.info("Bot is starting long polling... (Day 7)")
     # Auto init DB schema
