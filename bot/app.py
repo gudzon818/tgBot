@@ -26,6 +26,7 @@ from bot.handlers.items import router as items_router
 from bot.middlewares.anti_flood import AntiFloodMiddleware
 from bot.middlewares.rate_limit import RedisRateLimitMiddleware
 from bot.infra.db import init_db, close_db
+from bot.services.runtime import mark_started
 
 
 app: FastAPI | None = None
@@ -45,6 +46,8 @@ async def main() -> None:
     fh.setFormatter(fmt)
     fh.setLevel(level)
     logger.addHandler(fh)
+    # Mark process start for uptime metrics
+    mark_started()
     bot = Bot(token=settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
     # Try Redis FSM storage, fallback to memory if not available

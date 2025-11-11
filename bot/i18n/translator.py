@@ -12,8 +12,8 @@ _texts: Dict[str, Dict[str, str]] = {
         "en": "Hi! Bot started. 🚀",
     },
     "rate_prompt": {
-        "ru": "Оцените бота:",
-        "en": "Rate the bot:",
+        "ru": "Оцените бота: ChailyBot ",
+        "en": "Rate the bot: ChailyBot",
     },
     "help": {
         "ru": (
