@@ -101,3 +101,35 @@ docker run --name tgbot-postgres \
 Подсказки:
 - Если бот не видит БД — проверьте, запущен ли контейнер и корректен ли `DATABASE_URL`.
 - После изменения `.env` перезапускайте бота.
+
+## День 8 — Docker и docker-compose
+
+- Файлы:
+  - `Dockerfile` — образ бота (Python 3.12, requirements, entrypoint).
+  - `.dockerignore` — исключения для контекста.
+  - `docker-compose.yml` — сервисы: `db` (Postgres) и `bot`.
+  - `entrypoint.sh` — ожидание БД, миграции Alembic, запуск бота.
+
+### Запуск в контейнерах
+
+1) Экспортируйте секреты окружения (или используйте .env в корне):
+```bash
+export BOT_TOKEN=... 
+export ADMIN_ID=...
+export LOG_LEVEL=INFO
+export LOG_FILE=/var/log/bot.log
+```
+
+2) Запуск:
+```bash
+docker compose up --build
+```
+
+3) Проверка:
+- Бот стартует после готовности Postgres.
+- Миграции применяются автоматически (`alembic upgrade head`).
+- Команды и функционал работают как локально.
+
+Остановка:
+```bash
+docker compose down
