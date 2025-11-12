@@ -8,7 +8,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 import redis.asyncio as aioredis
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from aiogram.types import Update
 import uvicorn
 
@@ -96,7 +96,10 @@ async def main() -> None:
         async def on_startup():
             # Set webhook if URL provided
             if settings.webhook_url:
-                await bot.set_webhook(url=settings.webhook_url.rstrip("/") + settings.webhook_path)
+                await bot.set_webhook(
+                    url=settings.webhook_url.rstrip("/") + settings.webhook_path,
+                    secret_token=(settings.webhook_secret_token or None),
+                )
             logging.info("Webhook mode startup")
 
         @app.on_event("shutdown")
@@ -122,6 +125,11 @@ async def main() -> None:
 
         @app.post(settings.webhook_path)
         async def webhook(request: Request):
+            # Optional: validate Telegram secret token header if configured
+            if settings.webhook_secret_token:
+                header_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+                if header_token != settings.webhook_secret_token:
+                    raise HTTPException(status_code=403, detail="Forbidden")
             data = await request.json()
             update = Update.model_validate(data)
             await dp.feed_update(bot, update)

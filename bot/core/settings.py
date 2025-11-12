@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     web_host: str = Field(default="0.0.0.0", alias="WEB_HOST")
     web_port: int = Field(default=8000, alias="WEB_PORT")
     webhook_path: str = Field(default="/webhook", alias="WEBHOOK_PATH")
+    webhook_secret_token: str = Field(default="", alias="WEBHOOK_SECRET_TOKEN")
 
     model_config = SettingsConfigDict(
         env_file=".env",
