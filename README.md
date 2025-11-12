@@ -237,6 +237,74 @@ python -m bot.app
   - Команда выводит: uptime, статус Redis и DB, текущий LOG_LEVEL.
   - Пример: отправьте `/stats` в ЛС боту.
 
+## День 15 — Автоматический Webhook и деплой
+
+- При запуске в режиме webhook (`WEBHOOK_MODE=true`) бот автоматически вызывает `set_webhook`.
+- Поддержан секрет `WEBHOOK_SECRET_TOKEN` — заголовок `X-Telegram-Bot-Api-Secret-Token` валидируется на входе.
+
+### Быстрые шаги
+
+1) В `.env` укажите:
+```
+WEBHOOK_MODE=true
+WEBHOOK_URL=https://your-domain
+WEBHOOK_PATH=/webhook
+WEBHOOK_SECRET_TOKEN=<случайная_строка>
+```
+2) Настройте reverse‑proxy (ниже примеры) и откройте 443/HTTPS.
+3) Запустите контейнеры: `docker compose up -d`.
+4) Проверьте `GET https://your-domain/health` → `{ "status": "ok" }`.
+
+### Nginx (пример)
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name your-domain;
+
+    ssl_certificate     /etc/letsencrypt/live/your-domain/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain/privkey.pem;
+
+    location /health {
+        proxy_pass http://127.0.0.1:8000/health;
+        proxy_set_header Host $host;
+        proxy_read_timeout 60s;
+    }
+
+    location /webhook {
+        proxy_pass http://127.0.0.1:8000/webhook;
+        proxy_set_header Host $host;
+        proxy_read_timeout 60s;
+    }
+}
+```
+
+### Traefik (docker labels, пример)
+
+```yaml
+services:
+  bot:
+    image: ghcr.io/gudzon818/tgBot:latest
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/tgbot
+      REDIS_URL: redis://redis:6379/0
+      WEBHOOK_MODE: "true"
+      WEBHOOK_URL: https://your-domain
+      WEBHOOK_PATH: /webhook
+      WEBHOOK_SECRET_TOKEN: ${WEBHOOK_SECRET_TOKEN}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bot.rule=Host(`your-domain`) && PathPrefix(`/`)"
+      - "traefik.http.routers.bot.entrypoints=websecure"
+      - "traefik.http.routers.bot.tls=true"
+      - "traefik.http.services.bot.loadbalancer.server.port=8000"
+```
+
+Замечания:
+- Telegram сам добавляет заголовок `X-Telegram-Bot-Api-Secret-Token`; мы сверяем его с `WEBHOOK_SECRET_TOKEN`.
+- Для polling‑режима просто установите `WEBHOOK_MODE=false`.
+
 ## GHCR — публикация и использование Docker‑образа
 
 - Пайплайн GitHub Actions публикует образ в GitHub Container Registry (GHCR):
