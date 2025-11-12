@@ -28,11 +28,62 @@ from bot.middlewares.anti_flood import AntiFloodMiddleware
 from bot.middlewares.user_locale import UserLocaleMiddleware
 from bot.middlewares.metrics import MetricsMiddleware
 from bot.middlewares.rate_limit import RedisRateLimitMiddleware
+from bot.middlewares.moderation import ModerationMiddleware
+from bot.middlewares.cmd_rate_limit import CommandRateLimitMiddleware
+from bot.middlewares.redis_cmd_rate_limit import RedisCommandRateLimitMiddleware
 from bot.infra.db import init_db, close_db
 from bot.services.runtime import mark_started
 
 
 app: FastAPI | None = None
+
+
+def create_fastapi_app(bot: Bot, dp: Dispatcher, redis_client: aioredis.Redis | None, enable_startup: bool = True) -> FastAPI:  # type: ignore[name-defined]
+    web = FastAPI()
+
+    if enable_startup:
+        @web.on_event("startup")
+        async def on_startup():
+            if settings.webhook_url:
+                await bot.set_webhook(
+                    url=settings.webhook_url.rstrip("/") + settings.webhook_path,
+                    secret_token=(settings.webhook_secret_token or None),
+                )
+            logging.info("Webhook mode startup")
+
+        @web.on_event("shutdown")
+        async def on_shutdown():
+            try:
+                await bot.delete_webhook(drop_pending_updates=True)
+            except Exception:
+                pass
+            await close_db()
+            try:
+                await bot.session.close()
+            except Exception:
+                pass
+            if redis_client is not None:
+                try:
+                    await redis_client.close()
+                except Exception:
+                    pass
+
+    @web.get("/health")
+    async def health():
+        return {"status": "ok"}
+
+    @web.post(settings.webhook_path)
+    async def webhook(request: Request):
+        if settings.webhook_secret_token:
+            header_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+            if header_token != settings.webhook_secret_token:
+                raise HTTPException(status_code=403, detail="Forbidden")
+        data = await request.json()
+        update = Update.model_validate(data)
+        await dp.feed_update(bot, update)
+        return {"ok": True}
+
+    return web
 
 
 async def main() -> None:
@@ -82,6 +133,23 @@ async def main() -> None:
     dp.callback_query.middleware.register(UserLocaleMiddleware(default_lang="ru"))
     dp.message.middleware.register(MetricsMiddleware())
     dp.callback_query.middleware.register(MetricsMiddleware())
+    dp.message.middleware.register(ModerationMiddleware())
+    dp.callback_query.middleware.register(ModerationMiddleware())
+    # Per-command rate limits (drop if too frequent)
+    if redis_client is not None:
+        dp.message.middleware.register(
+            RedisCommandRateLimitMiddleware(redis_client, windows={
+                "/ping": 1,
+                "/feedback": 10,
+            }, default_window=0)
+        )
+    else:
+        dp.message.middleware.register(
+            CommandRateLimitMiddleware(windows={
+                "/ping": 1.0,
+                "/feedback": 10.0,
+            }, default_window=0.0)
+        )
     if redis_client is not None:
         dp.message.middleware.register(RedisRateLimitMiddleware(redis_client, window_seconds=1.5))
     else:
@@ -107,51 +175,7 @@ async def main() -> None:
     if settings.webhook_mode:
         # Build FastAPI app for webhook mode
         global app
-        app = FastAPI()
-
-        @app.on_event("startup")
-        async def on_startup():
-            # Set webhook if URL provided
-            if settings.webhook_url:
-                await bot.set_webhook(
-                    url=settings.webhook_url.rstrip("/") + settings.webhook_path,
-                    secret_token=(settings.webhook_secret_token or None),
-                )
-            logging.info("Webhook mode startup")
-
-        @app.on_event("shutdown")
-        async def on_shutdown():
-            try:
-                await bot.delete_webhook(drop_pending_updates=True)
-            except Exception:
-                pass
-            await close_db()
-            try:
-                await bot.session.close()
-            except Exception:
-                pass
-            if redis_client is not None:
-                try:
-                    await redis_client.close()
-                except Exception:
-                    pass
-
-        @app.get("/health")
-        async def health():
-            return {"status": "ok"}
-
-        @app.post(settings.webhook_path)
-        async def webhook(request: Request):
-            # Optional: validate Telegram secret token header if configured
-            if settings.webhook_secret_token:
-                header_token = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-                if header_token != settings.webhook_secret_token:
-                    raise HTTPException(status_code=403, detail="Forbidden")
-            data = await request.json()
-            update = Update.model_validate(data)
-            await dp.feed_update(bot, update)
-            return {"ok": True}
-
+        app = create_fastapi_app(bot, dp, redis_client, enable_startup=True)
         # Run uvicorn server
         config = uvicorn.Config(app, host=settings.web_host, port=settings.web_port, log_level="info")
         server = uvicorn.Server(config)

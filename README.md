@@ -362,6 +362,22 @@ ADMIN_ID=<один_админ_необязательно>
 ADMIN_IDS=123456,999999
 ```
 
+## День 20 — Производительность
+
+- Кэширование ответов (Redis с фолбэком в память):
+  - Включено для `/help` на 5 минут (ключ `help:<lang>`).
+- Per‑command rate‑limit через Redis (иначе — in‑memory):
+  - `/ping`: 1 сек, `/feedback`: 10 сек.
+- Дополнительные индексы БД:
+  - `feedbacks.created_at`
+  - `users.username`
+
+### Миграции
+
+```bash
+alembic upgrade head
+```
+
 ## GHCR — публикация и использование Docker‑образа
 
 - Пайплайн GitHub Actions публикует образ в GitHub Container Registry (GHCR):
