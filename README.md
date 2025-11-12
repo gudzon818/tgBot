@@ -216,3 +216,86 @@ python -m bot.app
 - /stats (для ADMIN_ID):
   - Команда выводит: uptime, статус Redis и DB, текущий LOG_LEVEL.
   - Пример: отправьте `/stats` в ЛС боту.
+
+## GHCR — публикация и использование Docker‑образа
+
+- Пайплайн GitHub Actions публикует образ в GitHub Container Registry (GHCR):
+  - Имя образа: `ghcr.io/<owner>/<repo>` (например, `ghcr.io/gudzon818/tgBot`).
+  - При пуше в main публикуются теги: `latest` и `sha` (хэш коммита).
+  - При пуше git‑тега в формате `vX.Y.Z` дополнительно публикуются: `X.Y.Z`, `X.Y`, `X`.
+
+### Сделать пакет публичным
+
+1) Откройте GitHub → ваш репозиторий → вкладка `Packages` → выберите пакет образа.
+2) Нажмите `Manage package`.
+3) В блоке Visibility выберите `Change visibility` → `Public` → подтвердите.
+
+### Аутентификация и pull образа
+
+- Если пакет публичный — логин не обязателен.
+- Если приватный — авторизуйтесь:
+  ```bash
+  echo $GITHUB_TOKEN | docker login ghcr.io -u <your_github_username> --password-stdin
+  ```
+
+Скачать образ:
+```bash
+docker pull ghcr.io/gudzon818/tgBot:latest
+```
+
+### Запуск контейнера (polling)
+
+```bash
+docker run --rm \
+  -e BOT_TOKEN=... \
+  -e DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/db \
+  -e REDIS_URL=redis://redis:6379/0 \
+  -e WEBHOOK_MODE=false \
+  -p 8000:8000 \
+  ghcr.io/gudzon818/tgBot:latest
+```
+
+### Запуск контейнера (webhook)
+
+```bash
+docker run --rm \
+  -e BOT_TOKEN=... \
+  -e DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/db \
+  -e REDIS_URL=redis://redis:6379/0 \
+  -e WEBHOOK_MODE=true \
+  -e WEBHOOK_URL=https://your-domain \
+  -e WEBHOOK_PATH=/webhook \
+  -e WEB_PORT=8000 \
+  -p 8000:8000 \
+  ghcr.io/gudzon818/tgBot:latest
+```
+
+### Пример docker-compose с образом из GHCR
+
+```yaml
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: tgbot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  bot:
+    image: ghcr.io/gudzon818/tgBot:latest
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/tgbot
+      REDIS_URL: redis://redis:6379/0
+      WEBHOOK_MODE: "false"
+    depends_on:
+      - db
+      - redis
+```
