@@ -19,6 +19,9 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copy app
 COPY . .
 
+# Ensure entrypoint is executable
+RUN chmod +x /app/entrypoint.sh
+
 # Build-time metadata (injected by CI)
 ARG APP_VERSION=dev
 ARG GIT_SHA=unknown
@@ -36,5 +39,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s CMD \
   python -c "import os,sys,http.client; h=os.environ.get('WEB_HOST','0.0.0.0'); p=int(os.environ.get('WEB_PORT','8000'));\nimport http.client as hc; c=hc.HTTPConnection(h,p,timeout=2);\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\ntry:\n c.request('GET','/health'); r=c.getresponse(); sys.exit(0 if r.status==200 else 1)\nexcept Exception:\n sys.exit(1)"
 
-# Default command: run bot (polling or webhook handled inside app)
-CMD ["python", "-m", "bot.app"]
+# Use entrypoint to run migrations then start the bot
+ENTRYPOINT ["/app/entrypoint.sh"]

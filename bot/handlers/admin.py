@@ -8,6 +8,12 @@ import redis.asyncio as aioredis
 from bot.services.runtime import uptime_seconds
 from bot.models.feedback import Feedback
 import os
+import aiogram
+
+try:
+    import resource  # type: ignore
+except Exception:  # pragma: no cover
+    resource = None  # type: ignore
 
 router = Router()
 
@@ -50,6 +56,32 @@ async def cmd_stats(message: types.Message) -> None:
         f"Mode: {'webhook' if settings.webhook_mode else 'polling'}\n"
         f"Version: {os.environ.get('APP_VERSION','dev')}\n"
         f"Git SHA: {os.environ.get('GIT_SHA','unknown')}\n"
+        f"Aiogram: {getattr(aiogram, '__version__', 'unknown')}\n"
+        f"RAM (RSS): {_calc_rss_mb()} MB\n"
+        f"CPU load (1/5/15m): {_load_avg()}\n"
         f"Feedbacks: {fb_count if fb_count is not None else 'n/a'}\n"
     )
     await message.answer(text_msg)
+
+
+def _calc_rss_mb() -> str:
+    try:
+        if resource is not None:
+            usage = resource.getrusage(resource.RUSAGE_SELF)
+            rss_kb = usage.ru_maxrss
+            # On Linux, ru_maxrss is in kilobytes; on macOS it can be bytes.
+            if rss_kb > 0 and rss_kb < 1_000_000:  # assume KB
+                return str(round(rss_kb / 1024, 1))
+            return str(round(rss_kb / (1024*1024), 1))
+    except Exception:
+        pass
+    # Fallback: unknown
+    return "n/a"
+
+
+def _load_avg() -> str:
+    try:
+        la = os.getloadavg()
+        return f"{la[0]:.2f}/{la[1]:.2f}/{la[2]:.2f}"
+    except Exception:
+        return "n/a"
