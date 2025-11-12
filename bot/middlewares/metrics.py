@@ -16,10 +16,10 @@ class MetricsMiddleware(BaseMiddleware):
     ) -> Any:
         inc_update()
         cmd: str | None = None
-        if isinstance(event, Message) and event.text:
-            text = event.text.strip()
-            if text.startswith("/"):
-                cmd = text.split()[0]
+        # Prefer duck-typing to simplify testing
+        text = getattr(event, "text", None)
+        if isinstance(text, str) and text.startswith("/"):
+            cmd = text.split()[0]
         elif isinstance(event, CallbackQuery):
             cmd = "callback"
 

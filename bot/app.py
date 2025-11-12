@@ -24,6 +24,7 @@ from bot.handlers.health import router as health_router
 from bot.handlers.lang import router as lang_router
 from bot.handlers.admin import router as admin_router
 from bot.handlers.items import router as items_router
+from bot.handlers.game import router as game_router
 from bot.middlewares.anti_flood import AntiFloodMiddleware
 from bot.middlewares.user_locale import UserLocaleMiddleware
 from bot.middlewares.metrics import MetricsMiddleware
@@ -160,6 +161,7 @@ async def main() -> None:
     dp.include_router(callbacks_router)
     dp.include_router(feedback_router)
     dp.include_router(whoami_router)
+    dp.include_router(game_router)
     dp.include_router(health_router)
     dp.include_router(lang_router)
     dp.include_router(admin_router)

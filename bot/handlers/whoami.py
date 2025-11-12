@@ -8,6 +8,6 @@ router = Router()
 async def cmd_whoami(message: types.Message) -> None:
     user = message.from_user
     await message.answer(
-        f"Ваш numeric id: <code>{user.id}</code>\n"
+        f"Ваш numeric id: <code>{user.id}</code>\n" +
         (f"Username: @{user.username}" if user.username else "Username: (нет)")
     )

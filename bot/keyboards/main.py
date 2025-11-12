@@ -1,15 +1,16 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from bot.i18n.translator import t
 
 
-def main_menu() -> ReplyKeyboardMarkup:
+def main_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
     kb = [
         [
-            KeyboardButton(text="/help"),
-            KeyboardButton(text="/ping"),
+            KeyboardButton(text=t("menu_daily", lang)),
+            KeyboardButton(text=t("menu_d20", lang)),
         ],
         [
-            KeyboardButton(text="/feedback"),
-            KeyboardButton(text="/lang"),
+            KeyboardButton(text=t("menu_quiz", lang)),
+            KeyboardButton(text=t("menu_quote", lang)),
         ],
     ]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)

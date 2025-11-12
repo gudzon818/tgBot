@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
-from sqlalchemy import BigInteger, DateTime, String
+from datetime import datetime, timezone, date
+from sqlalchemy import BigInteger, DateTime, String, Integer, Date
 from sqlalchemy.orm import Mapped, mapped_column
 
 from bot.infra.db import Base
@@ -17,3 +17,7 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )
+    # Gamification
+    score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    daily_streak: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_daily_on: Mapped[date | None] = mapped_column(Date, nullable=True)
