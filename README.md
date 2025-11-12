@@ -305,6 +305,63 @@ services:
 - Telegram сам добавляет заголовок `X-Telegram-Bot-Api-Secret-Token`; мы сверяем его с `WEBHOOK_SECRET_TOKEN`.
 - Для polling‑режима просто установите `WEBHOOK_MODE=false`.
 
+## День 16 — Персистентный i18n (язык в БД)
+
+- Добавлена таблица `users` для хранения языка пользователя (`language_code`).
+- Middleware `UserLocaleMiddleware` автоматически:
+  - создаёт запись пользователя при первом обращении,
+  - подставляет `lang` в handlers из БД (по умолчанию `ru`).
+- Команда `/lang` теперь обновляет язык в БД.
+
+### Миграция
+
+```bash
+alembic upgrade head
+```
+
+### Использование
+
+- `/lang` — показать текущий язык и подсказку по команде.
+- `/lang ru` или `/lang en` — сохранить язык в БД.
+
+## День 18 — Тесты
+
+- Конфигурация: `pyproject.toml` (pytest, ruff), директория `tests/`.
+- Примеры тестов:
+  - `test_translator.py` — переводы и форматирование.
+  - `test_repos.py` — async‑тесты репозиториев на SQLite (in‑memory).
+  - `test_middlewares.py` — метрики и latency.
+  - `test_webhook.py` — интеграционный тест FastAPI webhook.
+
+### Запуск
+
+```bash
+pytest -q
+```
+
+В CI прогоны выполняются автоматически (см. `.github/workflows/ci.yml`).
+
+## День 19 — Роли и безопасность
+
+- Мульти‑админы: `ADMIN_IDS` (список ID), fallback — `ADMIN_ID`.
+- Фильтр `IsAdmin` поддерживает `Message`/`CallbackQuery` и проверяет список.
+- Модерация:
+  - `/mute <user_id> [seconds]` или reply + `/mute [seconds]` (по умолчанию 600s)
+  - `/unmute <user_id>`
+  - `/ban <user_id>`
+  - `/unban <user_id>`
+- Middleware:
+  - `ModerationMiddleware` — блокировка banned и mute сообщений.
+  - `CommandRateLimitMiddleware` — окна частоты на команды (`/ping` — 1s, `/feedback` — 10s).
+
+### Настройка
+
+В `.env`:
+```
+ADMIN_ID=<один_админ_необязательно>
+ADMIN_IDS=123456,999999
+```
+
 ## GHCR — публикация и использование Docker‑образа
 
 - Пайплайн GitHub Actions публикует образ в GitHub Container Registry (GHCR):

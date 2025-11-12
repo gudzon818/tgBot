@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,7 +19,7 @@ class UserRepo:
         else:
             # touch username/updated_at
             obj.username = username
-            obj.updated_at = datetime.utcnow()
+            obj.updated_at = datetime.now(timezone.utc)
             await self.session.flush()
         return obj
 
@@ -32,6 +32,6 @@ class UserRepo:
         await self.session.execute(
             update(User)
             .where(User.user_id == user_id)
-            .values(language_code=lang, updated_at=datetime.utcnow())
+            .values(language_code=lang, updated_at=datetime.now(timezone.utc))
         )
         await self.session.commit()
