@@ -7,6 +7,7 @@ from sqlalchemy import text, select, func
 import redis.asyncio as aioredis
 from bot.services.runtime import uptime_seconds
 from bot.models.feedback import Feedback
+import os
 
 router = Router()
 
@@ -47,6 +48,8 @@ async def cmd_stats(message: types.Message) -> None:
         f"DB: {'OK' if db_ok else 'FAIL'}\n"
         f"Log level: {settings.log_level}\n"
         f"Mode: {'webhook' if settings.webhook_mode else 'polling'}\n"
+        f"Version: {os.environ.get('APP_VERSION','dev')}\n"
+        f"Git SHA: {os.environ.get('GIT_SHA','unknown')}\n"
         f"Feedbacks: {fb_count if fb_count is not None else 'n/a'}\n"
     )
     await message.answer(text_msg)
