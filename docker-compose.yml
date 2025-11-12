@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: tgbot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  bot:
+    image: ghcr.io/gudzon818/tgBot:latest
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      ADMIN_ID: ${ADMIN_ID}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FILE: ${LOG_FILE:-/var/log/bot.log}
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/tgbot
+      REDIS_URL: redis://redis:6379/0
+      WEBHOOK_MODE: ${WEBHOOK_MODE:-false}
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      WEBHOOK_PATH: ${WEBHOOK_PATH:-/webhook}
+      WEB_HOST: 0.0.0.0
+      WEB_PORT: 8000
+    ports:
+      - "8000:8000"
