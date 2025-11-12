@@ -2,6 +2,7 @@
 import asyncio
 import logging
 from logging.handlers import RotatingFileHandler
+import json
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -24,6 +25,8 @@ from bot.handlers.lang import router as lang_router
 from bot.handlers.admin import router as admin_router
 from bot.handlers.items import router as items_router
 from bot.middlewares.anti_flood import AntiFloodMiddleware
+from bot.middlewares.user_locale import UserLocaleMiddleware
+from bot.middlewares.metrics import MetricsMiddleware
 from bot.middlewares.rate_limit import RedisRateLimitMiddleware
 from bot.infra.db import init_db, close_db
 from bot.services.runtime import mark_started
@@ -37,13 +40,23 @@ async def main() -> None:
     level = getattr(logging, settings.log_level.upper(), logging.INFO)
     logger = logging.getLogger()
     logger.setLevel(level)
-    fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+    class JsonFormatter(logging.Formatter):
+        def format(self, record: logging.LogRecord) -> str:  # type: ignore[override]
+            obj = {
+                "ts": self.formatTime(record, datefmt="%Y-%m-%dT%H:%M:%S"),
+                "level": record.levelname,
+                "logger": record.name,
+                "msg": record.getMessage(),
+            }
+            return json.dumps(obj, ensure_ascii=False)
+
+    json_fmt = JsonFormatter()
     ch = logging.StreamHandler()
-    ch.setFormatter(fmt)
+    ch.setFormatter(json_fmt)
     ch.setLevel(level)
     logger.addHandler(ch)
     fh = RotatingFileHandler(settings.log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
-    fh.setFormatter(fmt)
+    fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
     fh.setLevel(level)
     logger.addHandler(fh)
     # Mark process start for uptime metrics
@@ -65,6 +78,10 @@ async def main() -> None:
 
     dp = Dispatcher(storage=storage)
     # Middlewares
+    dp.message.middleware.register(UserLocaleMiddleware(default_lang="ru"))
+    dp.callback_query.middleware.register(UserLocaleMiddleware(default_lang="ru"))
+    dp.message.middleware.register(MetricsMiddleware())
+    dp.callback_query.middleware.register(MetricsMiddleware())
     if redis_client is not None:
         dp.message.middleware.register(RedisRateLimitMiddleware(redis_client, window_seconds=1.5))
     else:

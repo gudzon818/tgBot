@@ -15,6 +15,7 @@ try:
 except Exception:  # pragma: no cover
     resource = None  # type: ignore
 
+from bot.services.metrics import snapshot as metrics_snapshot
 router = Router()
 
 
@@ -60,6 +61,17 @@ async def cmd_stats(message: types.Message) -> None:
         f"RAM (RSS): {_calc_rss_mb()} MB\n"
         f"CPU load (1/5/15m): {_load_avg()}\n"
         f"Feedbacks: {fb_count if fb_count is not None else 'n/a'}\n"
+    )
+
+    # Metrics block
+    m = metrics_snapshot()
+    top_lines = ", ".join([f"{cmd}:{cnt}" for cmd, cnt in m.get("top_commands", [])]) or "-"
+    avg_lines = ", ".join([f"{cmd}:{avg}ms" for cmd, avg in m.get("avg_latency_ms", {}).items()]) or "-"
+    text_msg += (
+        "\nMetrics:\n"
+        f"Total updates: {m.get('total_updates', 0)}\n"
+        f"Top commands: {top_lines}\n"
+        f"Avg latency: {avg_lines}\n"
     )
     await message.answer(text_msg)
 
