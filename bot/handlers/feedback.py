@@ -6,7 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from bot.infra.db import SessionLocal
 from bot.repositories.feedback_repo import FeedbackRepo
 from bot.core.settings import settings
-from bot.i18n.translator import t, get_user_lang
+from bot.i18n.translator import t
 
 router = Router()
 
@@ -16,15 +16,13 @@ class FeedbackStates(StatesGroup):
 
 
 @router.message(Command("feedback"))
-async def cmd_feedback(message: types.Message, state: FSMContext) -> None:
-    lang = get_user_lang(message.from_user.id)
+async def cmd_feedback(message: types.Message, state: FSMContext, lang: str) -> None:
     await state.set_state(FeedbackStates.waiting_text)
     await message.answer(t("feedback_prompt", lang))
 
 
 @router.message(Command("cancel"))
-async def cmd_cancel(message: types.Message, state: FSMContext) -> None:
-    lang = get_user_lang(message.from_user.id)
+async def cmd_cancel(message: types.Message, state: FSMContext, lang: str) -> None:
     if await state.get_state() is not None:
         await state.clear()
         await message.answer(t("feedback_cancel_ok", lang))
@@ -33,8 +31,7 @@ async def cmd_cancel(message: types.Message, state: FSMContext) -> None:
 
 
 @router.message(FeedbackStates.waiting_text)
-async def feedback_receive(message: types.Message, state: FSMContext) -> None:
-    lang = get_user_lang(message.from_user.id)
+async def feedback_receive(message: types.Message, state: FSMContext, lang: str) -> None:
     text = message.text or "(empty)"
     async with SessionLocal() as session:
         repo = FeedbackRepo(session)
@@ -44,8 +41,7 @@ async def feedback_receive(message: types.Message, state: FSMContext) -> None:
 
 
 @router.message(Command("last_feedbacks"))
-async def last_feedbacks(message: types.Message) -> None:
-    lang = get_user_lang(message.from_user.id)
+async def last_feedbacks(message: types.Message, lang: str) -> None:
     if settings.admin_id is None or message.from_user.id != settings.admin_id:
         await message.answer(t("access_denied", lang))
         return

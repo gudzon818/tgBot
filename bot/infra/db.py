@@ -17,6 +17,7 @@ SessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
 async def init_db() -> None:
     # Импорт моделей, чтобы они были зарегистрированы в metadata
     from bot.models import feedback  # noqa: F401
+    from bot.models import user  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
