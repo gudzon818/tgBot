@@ -44,8 +44,9 @@ _texts: Dict[str, Dict[str, str]] = {
             "👤 Профиль, рейтинг и настроение:\n"
             "  /me — показать рейтинг, стрик и прогресс викторины\n"
             "  /top — топ‑10 по очкам\n"
-            "  /mood — отметить сегодняшнее настроение (10 вариантов)\n"
-            "  /mood_stats — посмотреть статистику настроения и общий совет"
+            "  /mood — один раз в день отметить настроение с помощью эмодзи (10 вариантов)\n"
+            "         можно менять выбор в течение дня, сохранится последний\n"
+            "  /mood_stats — посмотреть статистику настроения за всё время и получить общий совет"
         ),
         "en": (
             "📚 Bot help\n\n"
@@ -65,8 +66,9 @@ _texts: Dict[str, Dict[str, str]] = {
             "👤 Profile, rating and mood:\n"
             "  /me — show your score, streak and quiz progress\n"
             "  /top — top‑10 by score\n"
-            "  /mood — log today’s mood (10 options)\n"
-            "  /mood_stats — view mood stats and a general suggestion"
+            "  /mood — log today’s mood once per day using emoji (10 options)\n"
+            "          you can change it during the day, the latest choice will be saved\n"
+            "  /mood_stats — view mood stats for all time and get a general suggestion"
         ),
     },
     "help_admin": {
