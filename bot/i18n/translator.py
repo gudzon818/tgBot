@@ -109,6 +109,8 @@ _texts: Dict[str, Dict[str, str]] = {
     "quiz_wrong": {"ru": "Неверно. ❌", "en": "Wrong. ❌"},
     "quiz_completed": {"ru": "Ты уже прошёл все вопросы викторины. 🎉", "en": "You have completed all quiz questions. 🎉"},
     "quote_title": {"ru": "Цитата дня:", "en": "Quote of the day:"},
+    "quote_locked_today": {"ru": "Цитата на сегодня уже была. Приходи завтра за новой.", "en": "You already got today’s quote. Come back tomorrow for a new one."},
+    "quote_all_used": {"ru": "Ты уже видел все доступные цитаты. 🎉", "en": "You have seen all available quotes. 🎉"},
     "menu_daily": {"ru": "📅 Задание дня", "en": "📅 Daily task"},
     "menu_d20": {"ru": "🎲 Ответ кубика", "en": "🎲 20-sided dice"},
     "menu_quiz": {"ru": "❓ Викторина", "en": "❓ Quiz"},

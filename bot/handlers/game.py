@@ -1,4 +1,5 @@
 import random
+from datetime import date
 from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -12,6 +13,8 @@ from bot.services.d20 import pick_answer as d20_answer
 from bot.services.cache import cache_get, cache_set
 from bot.services.quiz import get_by_id as quiz_get_by_id, get_total as quiz_get_total, get_difficulty_by_id
 from bot.repositories.quiz_repo import QuizRepo
+from bot.services.quotes import get_by_id as quote_get_by_id, get_total as quote_get_total
+from bot.repositories.quote_repo import QuoteRepo
 
 router = Router()
 
@@ -132,20 +135,22 @@ async def on_quiz_answer(call: types.CallbackQuery, lang: str) -> None:
 
 @router.message(Command("quote"))
 async def cmd_quote(message: types.Message, lang: str) -> None:
-    quotes = {
-        "ru": [
-            "Путь в тысячу ли начинается с одного шага. — Лао-цзы",
-            "Делай или не делай. Не бывает попыток. — Йода",
-            "Мы — то, что мы делаем постоянно. — Аристотель",
-        ],
-        "en": [
-            "The journey of a thousand miles begins with one step. — Lao Tzu",
-            "Do. Or do not. There is no try. — Yoda",
-            "We are what we repeatedly do. — Aristotle",
-        ],
-    }
-    items = quotes.get(lang) or quotes["ru"]
-    quote = random.choice(items)
+    today = date.today()
+    async with SessionLocal() as session:
+        repo = QuoteRepo(session)
+        # Если на сегодня уже выдавали цитату этому пользователю — больше не даём
+        existing = await repo.get_today(message.from_user.id, today)
+        if existing is not None:
+            await message.answer(t("quote_locked_today", lang))
+            return
+
+        total = quote_get_total()
+        qid = await repo.issue_new_for_today(message.from_user.id, today, total)
+        if qid is None:
+            await message.answer(t("quote_all_used", lang))
+            return
+
+    quote = quote_get_by_id(qid, lang)
     await message.answer(f"{t('quote_title', lang)}\n“{quote}”")
 
 
