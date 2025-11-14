@@ -177,25 +177,25 @@ async def cmd_horoscope(message: types.Message, lang: str) -> None:
 
 @router.message(Command("mood"))
 async def cmd_mood(message: types.Message, lang: str) -> None:
-    # 10 вариантов настроения с кодами
+    # 10 вариантов настроения с кодами (короткие подписи, чтобы влезали в кнопку)
     options = [
-        ("great", "😄"),
-        ("good", "🙂"),
-        ("ok", "😐"),
-        ("tired", "😴"),
-        ("stressed", "😵"),
-        ("sad", "😔"),
-        ("anxious", "😰"),
-        ("angry", "😡"),
-        ("bored", "🥱"),
-        ("excited", "🤩"),
+        ("great", "😄"),      # супер
+        ("good", "🙂"),       # хорошо
+        ("ok", "😐"),         # нормально
+        ("tired", "😴"),      # устал
+        ("stressed", "😵"),   # стресс
+        ("sad", "😔"),        # грустно
+        ("anxious", "😰"),    # тревожно
+        ("angry", "😡"),      # злюсь
+        ("bored", "🥱"),      # скучно
+        ("excited", "🤩"),    # воодушевлён
     ]
     # две строки по 5 кнопок
     rows: list[list[InlineKeyboardButton]] = []
     row: list[InlineKeyboardButton] = []
     for i, (code, emoji) in enumerate(options, start=1):
-        label_key = f"mood_label_{code}"
-        text = f"{emoji} {t(label_key, lang)}"
+        # показываем только эмодзи и очень короткий код, чтобы не обрезалось
+        text = emoji
         row.append(InlineKeyboardButton(text=text, callback_data=f"md:{code}"))
         if i % 5 == 0:
             rows.append(row)
@@ -230,6 +230,11 @@ async def on_menu_quote(message: types.Message, lang: str) -> None:
 @router.message(F.text.in_([t("menu_horoscope", "ru"), t("menu_horoscope", "en")]))
 async def on_menu_horoscope(message: types.Message, lang: str) -> None:
     await cmd_horoscope(message, lang)
+
+
+@router.message(F.text.in_([t("menu_mood", "ru"), t("menu_mood", "en")]))
+async def on_menu_mood(message: types.Message, lang: str) -> None:
+    await cmd_mood(message, lang)
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("hz:"))

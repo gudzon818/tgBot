@@ -122,6 +122,7 @@ _texts: Dict[str, Dict[str, str]] = {
     "menu_quiz": {"ru": "❓ Викторина", "en": "❓ Quiz"},
     "menu_quote": {"ru": "✨ Цитата дня", "en": "✨ Quote of the day"},
     "menu_horoscope": {"ru": "🔮 Гороскоп", "en": "🔮 Horoscope"},
+    "menu_mood": {"ru": "🧠 Настроение", "en": "🧠 Mood"},
     "horoscope_locked_today": {"ru": "Гороскоп на сегодня уже был. Приходи завтра за новым.", "en": "You already got today’s horoscope. Come back tomorrow for a new one."},
     "mood_prompt": {"ru": "Какое у тебя сегодня настроение? Выбери один вариант:", "en": "How do you feel today? Pick one option:"},
     "mood_saved": {"ru": "Настроение сохранено. Спасибо за честность.", "en": "Mood saved. Thanks for being honest."},
