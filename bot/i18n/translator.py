@@ -27,30 +27,68 @@ _texts: Dict[str, Dict[str, str]] = {
     },
     "help": {
         "ru": (
-            "Доступные команды:\n"
-            "/start — старт и клавиатура\n"
-            "/help — помощь\n"
-            "/ping — проверить отклик бота\n"
-            "/feedback — отправить отзыв\n"
-            "/lang — сменить язык (ru/en)\n"
-            "/daily — задание на день\n"
-            "/d20 — 20‑гранный кубик\n"
-            "/quiz — викторина\n"
-            "/quote — цитата дня"
+            "📚 Помощь по боту\n\n"
+            "🔹 Общие команды:\n"
+            "  /start — старт и главное меню\n"
+            "  /help — эта справка\n"
+            "  /ping — проверить отклик бота\n"
+            "  /feedback — отправить отзыв\n"
+            "  /lang — сменить язык (ru/en)\n\n"
+            "🎮 Игровой раздел:\n"
+            "  Эти команды — мини‑игры и мотивация на каждый день.\n"
+            "  /daily — задание дня (1 раз в сутки, даёт очки и стрик)\n"
+            "  /d20 — 20‑гранный кубик с DnD‑ответами и минутным кулдауном\n"
+            "  /quiz — викторина на 100 вопросов, прогресс и рейтинг сохраняются\n"
+            "  /quote — цитата дня для вдохновения\n\n"
+            "👤 Профиль и рейтинг:\n"
+            "  /me — показать рейтинг, стрик и прогресс викторины\n"
+            "  /top — топ‑10 по очкам\n\n"
+            "🛡 Админские команды (можно пропустить, если вы не админ):\n"
+            "  /stats — статистика бота\n"
+            "  /mute, /unmute, /ban, /unban — модерация пользователей"
         ),
         "en": (
-            "Available commands:\n"
-            "/start — start and keyboard\n"
-            "/help — help\n"
-            "/ping — check latency\n"
-            "/feedback — send feedback\n"
-            "/lang — change language (ru/en)\n"
-            "/daily — daily task\n"
-            "/d20 — 20‑sided dice\n"
-            "/quiz — quiz\n"
-            "/quote — quote of the day"
+            "📚 Bot help\n\n"
+            "🔹 General commands:\n"
+            "  /start — start and main menu\n"
+            "  /help — this help\n"
+            "  /ping — check latency\n"
+            "  /feedback — send feedback\n"
+            "  /lang — change language (ru/en)\n\n"
+            "🎮 Game section:\n"
+            "  These commands are mini‑games and daily motivation.\n"
+            "  /daily — daily task (once per day, gives score and streak)\n"
+            "  /d20 — 20‑sided dice with DnD‑style answers and 1‑minute cooldown\n"
+            "  /quiz — quiz with 100 questions, progress and rating are saved\n"
+            "  /quote — quote of the day for inspiration\n\n"
+            "👤 Profile and rating:\n"
+            "  /me — show your score, streak and quiz progress\n"
+            "  /top — top‑10 by score\n\n"
+            "🛡 Admin commands (you can skip this if you are not an admin):\n"
+            "  /stats — bot statistics\n"
+            "  /mute, /unmute, /ban, /unban — moderation commands"
         ),
     },
+    "help_admin": {
+        "ru": (
+            "🛡 Админские команды:\n"
+            "  /stats — статистика бота (задержки, БД, Redis, модерация)\n"
+            "  /mute <id> [сек] — временно заглушить пользователя\n"
+            "  /unmute <id> — снять мут\n"
+            "  /ban <id> — заблокировать пользователя\n"
+            "  /unban <id> — снять бан"
+        ),
+        "en": (
+            "🛡 Admin commands:\n"
+            "  /stats — bot stats (latency, DB, Redis, moderation)\n"
+            "  /mute <id> [seconds] — temporarily mute a user\n"
+            "  /unmute <id> — unmute a user\n"
+            "  /ban <id> — ban a user\n"
+            "  /unban <id> — unban a user"
+        ),
+    },
+    "menu_help": {"ru": "ℹ️ Помощь", "en": "ℹ️ Help"},
+    "menu_admin_help": {"ru": "🛡 Админ меню", "en": "🛡 Admin menu"},
     "ping_pong": {"ru": "Pong! {ms} ms", "en": "Pong! {ms} ms"},
     "feedback_prompt": {
         "ru": "Напишите ваш отзыв одним сообщением.\nОтправьте /cancel чтобы отменить.",
@@ -73,7 +111,7 @@ _texts: Dict[str, Dict[str, str]] = {
     "d20_cooldown": {"ru": "Подожди минуту перед следующим броском 🎲", "en": "Wait one minute before the next roll 🎲"},
     "d20_rolling": {"ru": "Бросаю кубик...", "en": "Rolling the die..."},
     "quiz_title": {"ru": "Викторина:", "en": "Quiz:"},
-    "quiz_correct": {"ru": "Верно! ✅", "en": "Correct! ✅"},
+    "quiz_correct": {"ru": "Верно! ✅ +{points} к рейтингу.", "en": "Correct! ✅ +{points} points to your score."},
     "quiz_wrong": {"ru": "Неверно. ❌", "en": "Wrong. ❌"},
     "quiz_completed": {"ru": "Ты уже прошёл все вопросы викторины. 🎉", "en": "You have completed all quiz questions. 🎉"},
     "quote_title": {"ru": "Цитата дня:", "en": "Quote of the day:"},

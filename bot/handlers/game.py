@@ -10,7 +10,7 @@ from bot.infra.db import SessionLocal
 from bot.repositories.daily_repo import DailyRepo, SCORES
 from bot.services.d20 import pick_answer as d20_answer
 from bot.services.cache import cache_get, cache_set
-from bot.services.quiz import get_by_id as quiz_get_by_id, get_total as quiz_get_total
+from bot.services.quiz import get_by_id as quiz_get_by_id, get_total as quiz_get_total, get_difficulty_by_id
 from bot.repositories.quiz_repo import QuizRepo
 
 router = Router()
@@ -109,11 +109,19 @@ async def on_quiz_answer(call: types.CallbackQuery, lang: str) -> None:
     is_correct = chosen == item.correct_index
 
     async with SessionLocal() as session:
-        repo = QuizRepo(session)
-        await repo.mark_answer(call.from_user.id, qid, is_correct)
+        quiz_repo = QuizRepo(session)
+        await quiz_repo.mark_answer(call.from_user.id, qid, is_correct)
+        points = 0
+        if is_correct:
+            difficulty = get_difficulty_by_id(qid)
+            # простое правило: easy=1, medium=2, hard=3
+            quiz_scores = {"easy": 1, "medium": 2, "hard": 3}
+            points = quiz_scores.get(difficulty, 1)
+            daily_repo = DailyRepo(session)
+            await daily_repo.award_quiz(call.from_user.id, call.from_user.username, points)
 
     if is_correct:
-        await call.message.answer(t("quiz_correct", lang))
+        await call.message.answer(t("quiz_correct", lang, points=points))
     else:
         await call.message.answer(t("quiz_wrong", lang))
     await call.answer()
@@ -210,7 +218,9 @@ async def cmd_me(message: types.Message, lang: str) -> None:
     total = quiz_get_total()
     profile = t("me_line", lang, score=score, streak=streak)
     quiz_line = t("me_quiz", lang, solved=solved, total=total)
-    await message.answer(f"{t('me_title', lang)}\n" + profile + "\n" + quiz_line)
+    progress = int(solved * 100 / total) if total else 0
+    quiz_progress = t("me_quiz_progress", lang, progress=progress)
+    await message.answer(f"{t('me_title', lang)}\n" + profile + "\n" + quiz_line + "\n" + quiz_progress)
 
 
 @router.message(Command("top"))

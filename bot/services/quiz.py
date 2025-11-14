@@ -262,3 +262,57 @@ def get_total() -> int:
 def pick_random_id(lang: str) -> int:
     # Просто для совместимости, если нужно случайное id
     return random.randint(1, get_total())
+
+
+def get_difficulty_by_id(qid: int) -> str:
+    """Вернуть сложность вопроса по id.
+
+    Простое правило: 1-40 easy, 41-80 medium, 81-100 hard.
+    """
+    if qid <= 40:
+        return "easy"
+    if qid <= 80:
+        return "medium"
+    return "hard"
+
+
+def get_category_by_id(qid: int) -> str:
+    """Вернуть категорию вопроса по id.
+
+    Категории распределяются по id по кругу.
+    """
+    categories = [
+        "general",      # общие знания / повседневность
+        "science",      # наука и природа
+        "geography",    # города, страны, планеты
+        "culture",      # книги, фильмы, искусство
+    ]
+    idx = (qid - 1) % len(categories)
+    return categories[idx]
+
+
+def get_difficulty_by_id(qid: int) -> str:
+    """Вернуть сложность вопроса по id.
+
+    Простое правило: 1-40 easy, 41-80 medium, 81-100 hard.
+    """
+    if qid <= 40:
+        return "easy"
+    if qid <= 80:
+        return "medium"
+    return "hard"
+
+
+def get_category_by_id(qid: int) -> str:
+    """Вернуть категорию вопроса по id.
+
+    Категории распределяются по id по кругу.
+    """
+    categories = [
+        "general",      # общие знания / повседневность
+        "science",      # наука и природа
+        "geography",    # города, страны, планеты
+        "culture",      # книги, фильмы, искусство
+    ]
+    idx = (qid - 1) % len(categories)
+    return categories[idx]

@@ -99,6 +99,20 @@ class DailyRepo:
             return 0, 0
         return int(row[0] or 0), int(row[1] or 0)
 
+
+    async def award_quiz(self, user_id: int, username: str | None, points: int) -> int:
+        """Начислить очки за правильно решённый вопрос викторины."""
+        res = await self.session.execute(select(User).where(User.user_id == user_id))
+        u: User | None = res.scalar_one_or_none()
+        if u is None:
+            u = User(user_id=user_id, username=username)
+            self.session.add(u)
+            await self.session.flush()
+        u.score = (u.score or 0) + max(points, 0)
+        u.updated_at = datetime.now(timezone.utc)
+        await self.session.commit()
+        return u.score or 0
+
     async def get_top(self, limit: int = 10) -> list[tuple[int, str | None, int]]:
         res = await self.session.execute(
             select(User.user_id, User.username, User.score).order_by(desc(User.score)).limit(limit)
