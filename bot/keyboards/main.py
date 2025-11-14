@@ -3,19 +3,18 @@ from bot.i18n.translator import t
 
 
 def main_menu(lang: str = "ru", is_admin: bool = False) -> ReplyKeyboardMarkup:
-    kb = [
-        [
-            KeyboardButton(text=t("menu_daily", lang)),
-            KeyboardButton(text=t("menu_d20", lang)),
-        ],
-        [
-            KeyboardButton(text=t("menu_quiz", lang)),
-            KeyboardButton(text=t("menu_quote", lang)),
-        ],
-        [
-            KeyboardButton(text=t("menu_help", lang)),
-        ],
+    # 1 ряд: игровые действия
+    row1 = [
+        KeyboardButton(text=t("menu_daily", lang)),
+        KeyboardButton(text=t("menu_d20", lang)),
+        KeyboardButton(text=t("menu_quiz", lang)),
+    ]
+    # 2 ряд: цитата, помощь и (для админа) админ‑меню
+    row2: list[KeyboardButton] = [
+        KeyboardButton(text=t("menu_quote", lang)),
+        KeyboardButton(text=t("menu_help", lang)),
     ]
     if is_admin:
-        kb.append([KeyboardButton(text=t("menu_admin_help", lang))])
+        row2.append(KeyboardButton(text=t("menu_admin_help", lang)))
+    kb = [row1, row2]
     return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)

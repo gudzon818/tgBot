@@ -42,10 +42,7 @@ _texts: Dict[str, Dict[str, str]] = {
             "  /quote — цитата дня для вдохновения\n\n"
             "👤 Профиль и рейтинг:\n"
             "  /me — показать рейтинг, стрик и прогресс викторины\n"
-            "  /top — топ‑10 по очкам\n\n"
-            "🛡 Админские команды (можно пропустить, если вы не админ):\n"
-            "  /stats — статистика бота\n"
-            "  /mute, /unmute, /ban, /unban — модерация пользователей"
+            "  /top — топ‑10 по очкам"
         ),
         "en": (
             "📚 Bot help\n\n"
@@ -63,10 +60,7 @@ _texts: Dict[str, Dict[str, str]] = {
             "  /quote — quote of the day for inspiration\n\n"
             "👤 Profile and rating:\n"
             "  /me — show your score, streak and quiz progress\n"
-            "  /top — top‑10 by score\n\n"
-            "🛡 Admin commands (you can skip this if you are not an admin):\n"
-            "  /stats — bot statistics\n"
-            "  /mute, /unmute, /ban, /unban — moderation commands"
+            "  /top — top‑10 by score"
         ),
     },
     "help_admin": {
