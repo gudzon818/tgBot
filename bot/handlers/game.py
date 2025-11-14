@@ -16,6 +16,8 @@ from bot.repositories.quiz_repo import QuizRepo
 from bot.services.quotes import get_by_id as quote_get_by_id, get_total as quote_get_total
 from bot.repositories.quote_repo import QuoteRepo
 from bot.services.horoscope import get_signs, get_random_horoscope
+from bot.repositories.horoscope_repo import HoroscopeRepo
+from bot.repositories.mood_repo import MoodRepo
 
 router = Router()
 
@@ -173,6 +175,37 @@ async def cmd_horoscope(message: types.Message, lang: str) -> None:
     await message.answer(header, reply_markup=kb)
 
 
+@router.message(Command("mood"))
+async def cmd_mood(message: types.Message, lang: str) -> None:
+    # 10 вариантов настроения с кодами
+    options = [
+        ("great", "😄"),
+        ("good", "🙂"),
+        ("ok", "😐"),
+        ("tired", "😴"),
+        ("stressed", "😵"),
+        ("sad", "😔"),
+        ("anxious", "😰"),
+        ("angry", "😡"),
+        ("bored", "🥱"),
+        ("excited", "🤩"),
+    ]
+    # две строки по 5 кнопок
+    rows: list[list[InlineKeyboardButton]] = []
+    row: list[InlineKeyboardButton] = []
+    for i, (code, emoji) in enumerate(options, start=1):
+        label_key = f"mood_label_{code}"
+        text = f"{emoji} {t(label_key, lang)}"
+        row.append(InlineKeyboardButton(text=text, callback_data=f"md:{code}"))
+        if i % 5 == 0:
+            rows.append(row)
+            row = []
+    if row:
+        rows.append(row)
+    kb = InlineKeyboardMarkup(inline_keyboard=rows)
+    await message.answer(t("mood_prompt", lang), reply_markup=kb)
+
+
 # Text button handlers (localized labels) that map to the same features
 @router.message(F.text.in_([t("menu_daily", "ru"), t("menu_daily", "en")]))
 async def on_menu_daily(message: types.Message, lang: str) -> None:
@@ -206,9 +239,36 @@ async def on_horoscope_select(call: types.CallbackQuery, lang: str) -> None:
     except Exception:
         await call.answer("OK")
         return
+
+    today = date.today()
+    async with SessionLocal() as session:
+        repo = HoroscopeRepo(session)
+        existing = await repo.get_today(call.from_user.id, today)
+        if existing is not None:
+            await call.answer("OK")
+            await call.message.answer(t("horoscope_locked_today", lang))
+            return
+        # логируем выбранный знак на сегодня
+        await repo.log_today(call.from_user.id, today, code)
+
     text = get_random_horoscope(code, lang)
     await call.message.answer(text)
     await call.answer()
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith("md:"))
+async def on_mood_select(call: types.CallbackQuery, lang: str) -> None:
+    try:
+        _, code = (call.data or "").split(":", 1)
+    except Exception:
+        await call.answer("OK")
+        return
+    today = date.today()
+    async with SessionLocal() as session:
+        repo = MoodRepo(session)
+        await repo.log_today(call.from_user.id, today, code)
+    await call.message.answer(t("mood_saved", lang))
+    await call.answer("OK")
 
 
 @router.callback_query(F.data.startswith("daily:done:"))
@@ -277,3 +337,56 @@ async def cmd_top(message: types.Message, lang: str) -> None:
         name = uname or str(uid)
         lines.append(f"{i}. {name}: {score}")
     await message.answer(f"{t('top_title', lang)}\n" + "\n".join(lines))
+
+
+@router.message(Command("mood_stats"))
+async def cmd_mood_stats(message: types.Message, lang: str) -> None:
+    async with SessionLocal() as session:
+        repo = MoodRepo(session)
+        stats = await repo.get_stats(message.from_user.id)
+        days = await repo.get_total_days(message.from_user.id)
+
+    if not stats:
+        await message.answer(t("mood_advice_low_data", lang))
+        return
+
+    # формируем текст статистики
+    lines: list[str] = [t("mood_stats_title", lang)]
+    # упорядочим по коду для стабильности
+    for code in [
+        "great", "good", "ok", "tired", "stressed",
+        "sad", "anxious", "angry", "bored", "excited",
+    ]:
+        cnt = stats.get(code)
+        if not cnt:
+            continue
+        label_key = f"mood_label_{code}"
+        label = t(label_key, lang)
+        lines.append(t("mood_stats_line", lang, label=label, count=cnt))
+    lines.append("")
+    lines.append(t("mood_stats_days", lang, days=days))
+
+    # простая оценка эмоционального фона
+    positive = stats.get("great", 0) + stats.get("good", 0) + stats.get("excited", 0)
+    neutral = stats.get("ok", 0) + stats.get("bored", 0)
+    negative = (
+        stats.get("tired", 0)
+        + stats.get("stressed", 0)
+        + stats.get("sad", 0)
+        + stats.get("anxious", 0)
+        + stats.get("angry", 0)
+    )
+    total = positive + neutral + negative
+    if total < 3:
+        advice = t("mood_advice_low_data", lang)
+    else:
+        if negative > positive and negative > neutral:
+            advice = t("mood_advice_negative", lang)
+        elif positive >= negative and positive >= neutral:
+            advice = t("mood_advice_positive", lang)
+        else:
+            advice = t("mood_advice_mixed", lang)
+
+    lines.append("")
+    lines.append(advice)
+    await message.answer("\n".join(lines))
