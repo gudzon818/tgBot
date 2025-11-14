@@ -39,10 +39,13 @@ _texts: Dict[str, Dict[str, str]] = {
             "  /daily — задание дня (1 раз в сутки, даёт очки и стрик)\n"
             "  /d20 — 20‑гранный кубик с DnD‑ответами и минутным кулдауном\n"
             "  /quiz — викторина на 100 вопросов, прогресс и рейтинг сохраняются\n"
-            "  /quote — цитата дня для вдохновения\n\n"
-            "👤 Профиль и рейтинг:\n"
+            "  /quote — цитата дня для вдохновения\n"
+            "  /horoscope — гороскоп по знакам с лимитом один раз в день\n\n"
+            "👤 Профиль, рейтинг и настроение:\n"
             "  /me — показать рейтинг, стрик и прогресс викторины\n"
-            "  /top — топ‑10 по очкам"
+            "  /top — топ‑10 по очкам\n"
+            "  /mood — отметить сегодняшнее настроение (10 вариантов)\n"
+            "  /mood_stats — посмотреть статистику настроения и общий совет"
         ),
         "en": (
             "📚 Bot help\n\n"
@@ -57,10 +60,13 @@ _texts: Dict[str, Dict[str, str]] = {
             "  /daily — daily task (once per day, gives score and streak)\n"
             "  /d20 — 20‑sided dice with DnD‑style answers and 1‑minute cooldown\n"
             "  /quiz — quiz with 100 questions, progress and rating are saved\n"
-            "  /quote — quote of the day for inspiration\n\n"
-            "👤 Profile and rating:\n"
+            "  /quote — quote of the day for inspiration\n"
+            "  /horoscope — horoscope by zodiac sign with one reading per day\n\n"
+            "👤 Profile, rating and mood:\n"
             "  /me — show your score, streak and quiz progress\n"
-            "  /top — top‑10 by score"
+            "  /top — top‑10 by score\n"
+            "  /mood — log today’s mood (10 options)\n"
+            "  /mood_stats — view mood stats and a general suggestion"
         ),
     },
     "help_admin": {
