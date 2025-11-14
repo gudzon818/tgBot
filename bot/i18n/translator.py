@@ -75,6 +75,7 @@ _texts: Dict[str, Dict[str, str]] = {
     "quiz_title": {"ru": "Викторина:", "en": "Quiz:"},
     "quiz_correct": {"ru": "Верно! ✅", "en": "Correct! ✅"},
     "quiz_wrong": {"ru": "Неверно. ❌", "en": "Wrong. ❌"},
+    "quiz_completed": {"ru": "Ты уже прошёл все вопросы викторины. 🎉", "en": "You have completed all quiz questions. 🎉"},
     "quote_title": {"ru": "Цитата дня:", "en": "Quote of the day:"},
     "menu_daily": {"ru": "📅 Задание дня", "en": "📅 Daily task"},
     "menu_d20": {"ru": "🎲 Ответ кубика", "en": "🎲 20-sided dice"},
@@ -95,8 +96,10 @@ _texts: Dict[str, Dict[str, str]] = {
     "daily_locked": {"ru": "Задание на сегодня уже получено. Новое будет доступно завтра.", "en": "You already had today’s task. A new one will be available tomorrow."},
     "daily_skip_locked": {"ru": "Хорошо. Новое задание будет доступно завтра.", "en": "Okay. A new task will be available tomorrow."},
     "me_title": {"ru": "Твой профиль:", "en": "Your profile:"},
-    "me_line": {"ru": "Рейтинг: {score}\nСтрик: {streak}", "en": "Score: {score}\nStreak: {streak}"},
-    "top_title": {"ru": "Топ 10:", "en": "Top 10:"},
+    "me_line": {"ru": "Очки: {score}, стрик: {streak} дней", "en": "Score: {score}, streak: {streak} days"},
+    "me_quiz": {"ru": "Викторина: {solved}/{total} правильных ответов", "en": "Quiz: {solved}/{total} correct answers"},
+    "me_quiz_progress": {"ru": "Прогресс викторины: {progress}%", "en": "Quiz progress: {progress}%"},
+    "top_title": {"ru": "🏆 Топ-10 по очкам", "en": "🏆 Top-10 by score"},
     "top_empty": {"ru": "Пока пусто.", "en": "No data yet."},
 }
 

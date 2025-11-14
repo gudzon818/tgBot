@@ -10,6 +10,8 @@ from bot.infra.db import SessionLocal
 from bot.repositories.daily_repo import DailyRepo, SCORES
 from bot.services.d20 import pick_answer as d20_answer
 from bot.services.cache import cache_get, cache_set
+from bot.services.quiz import get_by_id as quiz_get_by_id, get_total as quiz_get_total
+from bot.repositories.quiz_repo import QuizRepo
 
 router = Router()
 
@@ -68,46 +70,56 @@ async def cmd_d20(message: types.Message, lang: str) -> None:
     await rolling.edit_text(f"{t('d20_title', lang)} {ans}")
 
 
-def _quiz_keyboard(correct: int) -> InlineKeyboardMarkup:
-    # 0..3, set one correct
-    buttons = []
-    for i, text in enumerate(["A", "B", "C", "D"]):
-        is_ok = i == correct
-        cb = f"quiz:ok" if is_ok else f"quiz:no"
-        buttons.append([InlineKeyboardButton(text=text, callback_data=cb)])
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-
 @router.message(Command("quiz"))
 async def cmd_quiz(message: types.Message, lang: str) -> None:
-    # Simple mock question bank
-    bank = {
-        "ru": [
-            ("Столица Франции?", ["Берлин", "Париж", "Рим", "Мадрид"], 1),
-            ("2 + 2 = ?", ["3", "4", "5", "22"], 1),
-            ("Океан между Африкой и Австралией?", ["Индийский", "Тихий", "Атлантический", "Северный Ледовитый"], 0),
-        ],
-        "en": [
-            ("Capital of France?", ["Berlin", "Paris", "Rome", "Madrid"], 1),
-            ("2 + 2 = ?", ["3", "4", "5", "22"], 1),
-            ("Ocean between Africa and Australia?", ["Indian", "Pacific", "Atlantic", "Arctic"], 0),
-        ],
-    }
-    items = bank.get(lang) or bank["ru"]
-    q, options, correct = random.choice(items)
+    async with SessionLocal() as session:
+        repo = QuizRepo(session)
+        total = quiz_get_total()
+        qid = await repo.pick_next_question_id(message.from_user.id, total)
+    if qid is None:
+        await message.answer(t("quiz_completed", lang))
+        return
+    item = quiz_get_by_id(qid, lang)
     kb = InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text=txt, callback_data=("quiz:ok" if i == correct else "quiz:no"))] for i, txt in enumerate(options)]
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=txt,
+                    callback_data=f"quiz:{qid}:{i}",
+                )
+            ]
+            for i, txt in enumerate(item.options)
+        ]
     )
-    await message.answer(f"{t('quiz_title', lang)} {q}", reply_markup=kb)
+    await message.answer(f"{t('quiz_title', lang)} {item.question}", reply_markup=kb)
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("quiz:"))
 async def on_quiz_answer(call: types.CallbackQuery, lang: str) -> None:
-    if call.data == "quiz:ok":
+    # data: quiz:<qid>:<chosen_index>
+    try:
+        _, qid_str, idx_str = (call.data or "").split(":", 2)
+        qid = int(qid_str)
+        chosen = int(idx_str)
+    except Exception:
+        await call.answer("OK")
+        return
+
+    item = quiz_get_by_id(qid, lang)
+    is_correct = chosen == item.correct_index
+
+    async with SessionLocal() as session:
+        repo = QuizRepo(session)
+        await repo.mark_answer(call.from_user.id, qid, is_correct)
+
+    if is_correct:
         await call.message.answer(t("quiz_correct", lang))
     else:
         await call.message.answer(t("quiz_wrong", lang))
     await call.answer()
+    # После ответа сразу предложим следующий вопрос, если он есть
+    if call.message is not None:
+        await cmd_quiz(call.message, lang)
 
 
 @router.message(Command("quote"))
@@ -191,11 +203,14 @@ async def on_daily_another(call: types.CallbackQuery, lang: str) -> None:
 @router.message(Command("me"))
 async def cmd_me(message: types.Message, lang: str) -> None:
     async with SessionLocal() as session:
-        repo = DailyRepo(session)
-        score, streak = await repo.get_me(message.from_user.id)
-    await message.answer(
-        f"{t('me_title', lang)}\n" + t("me_line", lang, score=score, streak=streak)
-    )
+        daily_repo = DailyRepo(session)
+        score, streak = await daily_repo.get_me(message.from_user.id)
+        quiz_repo = QuizRepo(session)
+        solved = await quiz_repo.get_solved_count(message.from_user.id)
+    total = quiz_get_total()
+    profile = t("me_line", lang, score=score, streak=streak)
+    quiz_line = t("me_quiz", lang, solved=solved, total=total)
+    await message.answer(f"{t('me_title', lang)}\n" + profile + "\n" + quiz_line)
 
 
 @router.message(Command("top"))
