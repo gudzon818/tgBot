@@ -15,6 +15,7 @@ from bot.services.quiz import get_by_id as quiz_get_by_id, get_total as quiz_get
 from bot.repositories.quiz_repo import QuizRepo
 from bot.services.quotes import get_by_id as quote_get_by_id, get_total as quote_get_total
 from bot.repositories.quote_repo import QuoteRepo
+from bot.services.horoscope import get_signs, get_random_horoscope
 
 router = Router()
 
@@ -156,20 +157,20 @@ async def cmd_quote(message: types.Message, lang: str) -> None:
 
 @router.message(Command("horoscope"))
 async def cmd_horoscope(message: types.Message, lang: str) -> None:
-    # Просто выводим список знаков зодиака с эмодзи
-    lines_ru = [
-        "♈ Овен", "♉ Телец", "♊ Близнецы", "♋ Рак",
-        "♌ Лев", "♍ Дева", "♎ Весы", "♏ Скорпион",
-        "♐ Стрелец", "♑ Козерог", "♒ Водолей", "♓ Рыбы",
-    ]
-    lines_en = [
-        "♈ Aries", "♉ Taurus", "♊ Gemini", "♋ Cancer",
-        "♌ Leo", "♍ Virgo", "♎ Libra", "♏ Scorpio",
-        "♐ Sagittarius", "♑ Capricorn", "♒ Aquarius", "♓ Pisces",
-    ]
-    lines = lines_ru if lang == "ru" else lines_en
-    text = "\n".join(lines)
-    await message.answer(text)
+    signs = get_signs(lang)
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=f"{s.emoji} {s.name_ru if lang == 'ru' else s.name_en}",
+                    callback_data=f"hz:{s.code}",
+                )
+            ]
+            for s in signs
+        ]
+    )
+    header = "Выбери свой знак:" if lang == "ru" else "Choose your sign:"
+    await message.answer(header, reply_markup=kb)
 
 
 # Text button handlers (localized labels) that map to the same features
@@ -196,6 +197,18 @@ async def on_menu_quote(message: types.Message, lang: str) -> None:
 @router.message(F.text.in_([t("menu_horoscope", "ru"), t("menu_horoscope", "en")]))
 async def on_menu_horoscope(message: types.Message, lang: str) -> None:
     await cmd_horoscope(message, lang)
+
+
+@router.callback_query(lambda c: c.data and c.data.startswith("hz:"))
+async def on_horoscope_select(call: types.CallbackQuery, lang: str) -> None:
+    try:
+        _, code = (call.data or "").split(":", 1)
+    except Exception:
+        await call.answer("OK")
+        return
+    text = get_random_horoscope(code, lang)
+    await call.message.answer(text)
+    await call.answer()
 
 
 @router.callback_query(F.data.startswith("daily:done:"))
