@@ -9,9 +9,10 @@ def main_menu(lang: str = "ru", is_admin: bool = False) -> ReplyKeyboardMarkup:
         KeyboardButton(text=t("menu_d20", lang)),
         KeyboardButton(text=t("menu_quiz", lang)),
     ]
-    # 2 ряд: цитата, помощь и (для админа) админ‑меню
+    # 2 ряд: цитата, гороскоп, помощь и (для админа) админ‑меню
     row2: list[KeyboardButton] = [
         KeyboardButton(text=t("menu_quote", lang)),
+        KeyboardButton(text=t("menu_horoscope", lang)),
         KeyboardButton(text=t("menu_help", lang)),
     ]
     if is_admin:

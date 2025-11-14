@@ -115,6 +115,7 @@ _texts: Dict[str, Dict[str, str]] = {
     "menu_d20": {"ru": "🎲 Ответ кубика", "en": "🎲 20-sided dice"},
     "menu_quiz": {"ru": "❓ Викторина", "en": "❓ Quiz"},
     "menu_quote": {"ru": "✨ Цитата дня", "en": "✨ Quote of the day"},
+    "menu_horoscope": {"ru": "🔮 Гороскоп", "en": "🔮 Horoscope"},
     "daily_done_btn": {"ru": "✅ Выполнено", "en": "✅ Done"},
     "daily_skip_btn": {"ru": "🚫 Отказаться", "en": "🚫 Skip for today"},
     "daily_marked_done": {"ru": "Отлично! Задание отмечено выполненным.", "en": "Great! Task marked as done."},

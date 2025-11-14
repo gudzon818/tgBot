@@ -154,6 +154,24 @@ async def cmd_quote(message: types.Message, lang: str) -> None:
     await message.answer(f"{t('quote_title', lang)}\n“{quote}”")
 
 
+@router.message(Command("horoscope"))
+async def cmd_horoscope(message: types.Message, lang: str) -> None:
+    # Просто выводим список знаков зодиака с эмодзи
+    lines_ru = [
+        "♈ Овен", "♉ Телец", "♊ Близнецы", "♋ Рак",
+        "♌ Лев", "♍ Дева", "♎ Весы", "♏ Скорпион",
+        "♐ Стрелец", "♑ Козерог", "♒ Водолей", "♓ Рыбы",
+    ]
+    lines_en = [
+        "♈ Aries", "♉ Taurus", "♊ Gemini", "♋ Cancer",
+        "♌ Leo", "♍ Virgo", "♎ Libra", "♏ Scorpio",
+        "♐ Sagittarius", "♑ Capricorn", "♒ Aquarius", "♓ Pisces",
+    ]
+    lines = lines_ru if lang == "ru" else lines_en
+    text = "\n".join(lines)
+    await message.answer(text)
+
+
 # Text button handlers (localized labels) that map to the same features
 @router.message(F.text.in_([t("menu_daily", "ru"), t("menu_daily", "en")]))
 async def on_menu_daily(message: types.Message, lang: str) -> None:
@@ -173,6 +191,11 @@ async def on_menu_quiz(message: types.Message, lang: str) -> None:
 @router.message(F.text.in_([t("menu_quote", "ru"), t("menu_quote", "en")]))
 async def on_menu_quote(message: types.Message, lang: str) -> None:
     await cmd_quote(message, lang)
+
+
+@router.message(F.text.in_([t("menu_horoscope", "ru"), t("menu_horoscope", "en")]))
+async def on_menu_horoscope(message: types.Message, lang: str) -> None:
+    await cmd_horoscope(message, lang)
 
 
 @router.callback_query(F.data.startswith("daily:done:"))
